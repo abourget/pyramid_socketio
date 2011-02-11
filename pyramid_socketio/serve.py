@@ -23,7 +23,7 @@ def socketio_serve():
         print "ERROR: Please specify .ini file on command line"
         sys.exit(1)
 
-    do_reload = sys.argv[1] == '--reload'
+    do_reload = sys.argv[1] == '--watch'
 
     # Setup logging...
     cfgfile = sys.argv[2] if do_reload else sys.argv[1]
