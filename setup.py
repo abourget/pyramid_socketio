@@ -37,6 +37,11 @@ setup(name='pyramid_socketio',
       [console_scripts]
       socketio-serve-reload = pyramid_socketio.servereload:socketio_serve_reload
       socketio-serve = pyramid_socketio.serve:socketio_serve
+
+      [paste.server_factory]
+      sioserver = pyramid_socketio.pasteserve:server_factory
+      sioserver_patched = pyramid_socketio.pasteserve:server_factory_patched
+
       """,
       )
 

@@ -1,12 +1,30 @@
 Gevent-based Socket.IO integration for Pyramid (and WSGI frameworks)
 ====================================================================
 
-Simple usage:
+To use the server, either run:
+
+<pre>
+socketio-serve development.ini
+socketio-serve-reload development.ini
+</pre>
+
+or tweak your <code>[server:main]</code> section in your development.ini to:
+
+<pre>
+[server:main]
+use = egg:pyramid_socketio#sioserver_patched                                                                                     resource = socket.io
+host = 0.0.0.0
+port = 6555
+</pre>
+
+otherwise, follow instructions given for <code>pastegevent</code>.
+
+
+Simple in-Pyramid usage:
 
 <pre>
 ### somewhere in a Pyramid view:
-from intr.socketio import SocketIOContext, socketio_manage
-
+from pyramid_socketio import SocketIOContext, socketio_manage
 
 class ConnectIOContext(SocketIOContext):
     """Starting context, which will go one side or the other"""
@@ -15,7 +33,7 @@ class ConnectIOContext(SocketIOContext):
             self.io.send(dict(type="error", error="unknown_connect_context",
                               msg="You asked for a context that doesn't exist"))
             return
-        # Waiting for a msg such as: {'type': connect', 'context': 'interest'}
+        # Waiting for a msg such as: {'type': connect', 'context': 'section'}
         newctx = self.switch(contexts[msg['context']])
         if hasattr(newctx, 'startup'):
             newctx.startup(msg)
@@ -25,32 +43,28 @@ class ConnectIOContext(SocketIOContext):
 
     def msg_login(self, msg):
         # Do the login, then wait for the next connect
-        from intr.bound_models import User, ObjectId
-        u = User.find_one({'_id': ObjectId("4d4892a12a16e62df4000000")})
-        intrs = u['interests']
-        from intr.views.auth import create_session
-        create_session(request, u, intrs)
-        print "Logged, created session"
+        self.request.session.user_id = 123
+        print "Logged in, session created and"
 
 
-class InterestIOContext(SocketIOContext):
+class SectionIOContext(SocketIOContext):
     def startup(self, connect_msg):
-        print "Started the interest context"
-        self.intr_id = connect_msg['interest_id']
+        print "Started the section context"
+        self.my_id = connect_msg['section_id']
         # TODO: make sure we don't leak Sessions from MongoDB!
         from intr.models import mdb # can't import globally, because of Pyramid
         self.db = mdb
         self.conn = BrokerConnection("localhost", "guest", "guest", "/")
         self.chan = self.conn.channel()
         self.queue = Queue("session-%s" % self.io.session.session_id,
-                           exchange=intr_exchange,
+                           exchange=my_exchange,
                            durable=False, exclusive=True,
                            auto_delete=True,
-                           routing_key="interest.%s" % self.intr_id)
+                           routing_key="section.%s" % self.my_id)
 
-        self.producer = Producer(self.chan, exchange=intr_exchange,
+        self.producer = Producer(self.chan, exchange=my_exchange,
                                  serializer="json",
-                                 routing_key="interest.%s" % self.intr_id)
+                                 routing_key="section.%s" % self.my_id)
         self.producer.declare()
         self.consumer = Consumer(self.chan, [self.queue])
         self.consumer.declare()
@@ -90,9 +104,6 @@ class InterestIOContext(SocketIOContext):
     def msg_forget(self, msg):
         pass
 
-    def msg_interest(self, msg):
-        pass
-
     def msg_change_privacy(self, msg):
         pass
 
@@ -100,13 +111,9 @@ class InterestIOContext(SocketIOContext):
         pass
 
 
-
-
-contexts = {'interest': InterestIOContext,
+contexts = {'section': SectionIOContext,
             'somewhereelse': SocketIOContext,
             }
-
-
 
 #
 # SOCKET.IO implementation
@@ -121,7 +128,6 @@ def socket_io(request):
     return Response(retval)
 
 
-
 #### Inside __init__.py for your Pyramid application:
 def main(..):
     ...
@@ -129,3 +135,6 @@ def main(..):
     config.add_route('socket_io', 'socket.io/*remaining')
     ....
 </pre>
+
+In the routes and view configurations, 'socket.io' is the "resource" specified either in the server (under [server:main], key=resource), and is by default "socket.io".  This is pretty much a standard..
+
