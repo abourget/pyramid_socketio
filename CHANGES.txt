@@ -1,0 +1,15 @@
+0.3
+
+ - CHANGES and README added to description.
+
+0.2
+
+ - Help updated
+
+0.1
+
+ - Initial release
+ - Support for paster server plugin
+ - Provide with command-line servers
+   - socketio-serve
+   - socketio-serve-reload

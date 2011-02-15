@@ -16,9 +16,9 @@ requires = [
     ]
 
 setup(name='pyramid_socketio',
-      version='0.1',
+      version='0.3',
       description='Gevent-based Socket.IO pyramid integration and helpers',
-      #long_description=README + '\n\n' +  CHANGES,
+      long_description=README + '\n\n---\n\n' +  CHANGES,
       classifiers=[
         "Programming Language :: Python",
         "Framework :: Pylons",
@@ -27,7 +27,7 @@ setup(name='pyramid_socketio',
         ],
       author='Alexandre Bourget',
       author_email='alex@bourget.cc',
-      url='http://blog.abourget.net',
+      url='https://github.com/abourget/pyramid_socketio',
       keywords='web wsgi pylons pyramid websocket python gevent socketio socket.io',
       packages=find_packages(),
       include_package_data=True,
