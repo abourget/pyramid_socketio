@@ -99,10 +99,12 @@ class SectionIOContext(SocketIOContext):
     # Socket messages
     #
     def msg_memorize(self, msg):
-        # do something
+        # "memorized" is the 'type' attribute, any other kwarg added will be
+        # added to the JSON object.
+        self.msg("memorized", some="thing")
 
     def msg_forget(self, msg):
-        pass
+        self.error("error_code", "Error message")
 
     def msg_change_privacy(self, msg):
         pass
@@ -110,6 +112,8 @@ class SectionIOContext(SocketIOContext):
     def msg_get_members(self, msg):
         pass
 
+    def msg_enter_game(self, msg):
+        return self.switch(SomeOtherIOContext)
 
 contexts = {'section': SectionIOContext,
             'somewhereelse': SocketIOContext,
