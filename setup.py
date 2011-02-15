@@ -22,7 +22,7 @@ setup(name='pyramid_socketio',
       classifiers=[
         "Programming Language :: Python",
         "Framework :: Pylons",
-        "Framework :: Pyramid",
+        "Framework :: BFG",
         "Topic :: Internet :: WWW/HTTP",
         ],
       author='Alexandre Bourget',
