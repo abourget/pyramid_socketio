@@ -142,3 +142,85 @@ def main(..):
 
 In the routes and view configurations, 'socket.io' is the "resource" specified either in the server (under [server:main], key=resource), and is by default "socket.io".  This is pretty much a standard..
 
+
+
+#
+#  On the JavaScript side:
+#
+
+Somewhere:
+
+  <script src="http://cdn.socket.io/stable/socket.io.js"></script>
+
+And then:
+
+var socket = new io.Socket(null, {rememberTransport: false,
+                                  transports: ['websocket', 'xhr-multipart', 'xhr-polling', 'jsonp-polling']});
+socket.on('message', function(obj){
+  console.log("message:", JSON.stringify(obj));
+  if ((obj.type == "memorized") || (obj.type == "forgot")) {
+    // do some tihngs...
+  }
+  else if (obj.type == "new_content") {
+    $("div.intr-timeline").append($(obj.insert_html));
+  }
+  else if (obj.type == "privacy_changed") {
+    $("#privacy").val(obj.new_value);
+  }
+  else if (obj.type == "photos_sent") {
+    $('#intrentry-post-photos div.upload').empty();
+    new_upload_box();
+  }
+});
+socket.on('error', function(obj) {
+  console.log("error", obj);
+});
+socket.on('disconnect', function(obj) {
+  console.log("disconnected", obj);
+  socketio_notification("Disconnected", "There was a disconnection, either because of network or server failure");
+  socketio_schedule_reconnect();
+});
+var connection_notification = null;
+socket.on('connect', function() {
+  console.log("connected");
+  // Comment out if you don't use the auto-reconnect machinery:
+  socketio_notification();
+  socket.send({type: "connect", context: "interest", interest_id: "${intr['_id']}"});
+});
+
+
+
+// Use this:
+
+socket.connect(); 
+
+
+
+// Or this is optional auto-reconnect machinery:
+
+function socketio_schedule_reconnect() {
+  setTimeout(function() { if (!socket.connected && !socket.connecting) { socketio_reconnect("reconnect");}}, 1000);
+}
+function socketio_reconnect(func) {
+  console.log("connecting... ", socket);
+  if (func == "connect") {
+    socketio_notification("Connecting", "Connecting...");
+  }
+  if (func == "reconnect") {
+    socketio_notification("Re-connecting", "Attempting to reconnect...");
+    socketio_schedule_reconnect();
+  }
+  socket.connect();
+}
+function socketio_notification(title, msg) {
+  if (connection_notification) {
+    connection_notification.close();
+    connection_notification = null;
+  }
+  if (title) {
+    connection_notification = notify_default(title, msg);
+  }
+}
+$(document).ready(function() {
+  socketio_reconnect('connect');
+});
