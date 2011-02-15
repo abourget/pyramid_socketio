@@ -1,3 +1,7 @@
+0.4
+
+ - Updated docs.
+
 0.3
 
  - CHANGES and README added to description.
