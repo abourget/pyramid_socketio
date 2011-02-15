@@ -1,6 +1,7 @@
-Upcoming:
+0.5:
 
  - Added JavaScript example.
+ - Fixed setup.py (having not included CHANGES.txt in the sdist)
 
 0.4
 
