@@ -1,3 +1,11 @@
+####################
+CHECK OUT THIS POST: http://blog.abourget.net/2011/3/17/new-and-hot-part-4-pyramid-socket-io-gevent/
+####################
+
+
+
+The following is a bit rude and rough, check the blog post instead
+
 Gevent-based Socket.IO integration for Pyramid (and WSGI frameworks)
 ====================================================================
 
