@@ -2,7 +2,7 @@
 import gevent
 from gevent import monkey; monkey.patch_all()
 
-from ConfigParser import ConfigParser
+from ConfigParser import ConfigParser, NoSectionError
 import logging
 import logging.config
 import socket
@@ -27,7 +27,10 @@ def socketio_serve():
 
     # Setup logging...
     cfgfile = sys.argv[2] if do_reload else sys.argv[1]
-    logging.config.fileConfig(cfgfile)
+    try:
+        logging.config.fileConfig(cfgfile)
+    except NoSectionError, e:
+        pass
     log = logging.getLogger(__name__)
 
     cfg = ConfigParser()

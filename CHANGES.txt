@@ -1,3 +1,7 @@
+0.6:
+
+ - Fixed a bug with .ini files with no logging sections (like formatters)
+
 0.5:
 
  - Added JavaScript example.
