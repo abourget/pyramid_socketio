@@ -16,7 +16,7 @@ requires = [
     ]
 
 setup(name='pyramid_socketio',
-      version='0.6',
+      version='0.7',
       description='Gevent-based Socket.IO pyramid integration and helpers',
       long_description="DOCUMENTATION: https://github.com/abourget/pyramid_socketio\n\n---\n\n" +  CHANGES,
       classifiers=[

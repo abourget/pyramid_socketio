@@ -23,12 +23,20 @@ class SocketIOContext(object):
         * ``in_type`` - the dict. key for message names of incoming messages
         * ``out_type`` - the dict. key for message names, in outgoing message
         * ``debug`` - whether to disable debug logging...
+
+        On the object you subclass from this one, you should define methods
+        using the "msg_message_type" naming convention, where 'message_type'
+        is the value for the 'type' key (or whatever was in `in_type`).  This
+        is the function that will be called when a message is received to be
+        dispatched.
         """
         self.request = request
         self.io = request.environ['socketio']
         self._parent = None
         self._in_type = in_type
         self._out_type = out_type
+        self._on_disconnect = []
+        self.id = self.io.session.session_id
         if not hasattr(request, 'jobs'):
             request.jobs = []
 
@@ -37,43 +45,69 @@ class SocketIOContext(object):
              self.debug = lambda x: None
 
     def debug(self, msg):
-        log.debug("%s: %s" % (self.io.session.session_id, msg))
+        print "%s: %s" % (self.id, msg)
 
-    def spawn(self, callable, *args):
+    def on_disconnect(self, callback, *args, **kwargs):
+        """Append to list of callbacks when the socket is closed, to do some
+        clean-up."""
+        self._on_disconnect.append((callback, args, kwargs))
+
+    def spawn(self, callable, *args, **kwargs):
         """Spawn a new process in the context of this request.
 
         It will be monitored by the "watcher" method
         """
         self.debug("Spawning greenlet: %s" % callable.__name__)
-        new = gevent.spawn(callable, *args)
+        new = gevent.spawn(callable, *args, **kwargs)
         self.request.jobs.append(new)
         return new
 
-    def kill(self):
-        """Kill the current context, pass control to the parent context if
-        "return" is True.  If this is the last context, close the connection."""
-        # Detach objects to dismantle cyclic references
-        # (was that going to happen anyway ?)
+    def kill(self, recursive=True):
+        """Kill the current context, call the `on_disconnect` callbacks.
+
+        To pass control to the parent context, you must pass recursive=False
+        *and* return the value returned by this call to kill() (same as
+        switch()).
+
+        If recursive is True, then all parent contexts will also be killed,
+        calling in the process all the `on_disconnect` callbacks defined by
+        each contexts.  This is what happens automatically when the SocketIO
+        socket gets disconnected for any reasons.
+
+        """
         request = self.request
         io = self.io
         self.request = None
         self.io = None
+
+        for callback, ar, kwar in self._on_disconnect:
+            # NOTE: should we have a way to declare Blocking on_disconnect
+            # callbacks, or should these things all be spawned to some other
+            # greenlets ?
+            callback(*ar, **kwar)
+        self._on_disconnect = []
+
         if self._parent:
             parent = self._parent
             self._parent = None
-            return parent
+            if recursive:
+                return parent.kill(recursive)
+            return parent  # otherwise, switch context
         else:
             io.close()
             return
             
-    def switch(self, new_context):
+
+    def switch(self, new_context, *args, **kwargs):
         """Switch context, stack up contexts and pass on request.
 
         Important note: the caller *must* return the value returned by switch()
         to the managing context.
+
+        >>> return self.switch(NewContext, debug=True)
         """
         self.debug("Switching context: %s" % new_context.__name__)
-        newctx = new_context(self.request)
+        newctx = new_context(self.request, *args, **kwargs)
         newctx._parent = self
         newctx._in_type = self._in_type
         newctx._out_type = self._out_type
@@ -82,13 +116,33 @@ class SocketIOContext(object):
     def error(self, code, msg):
         """Used to quickly generate an error message"""
         self.debug("error: %s, %s" % (code, msg))
-        self.io.send({self._out_type: "error", 'error': code, 'msg': msg})
+        self.send({self._out_type: "error", 'error': code, 'msg': msg})
 
-    def msg(self, msg_type, **kwargs):
-        """Used to quickly generate an error message"""
+    def msg(self, msg_type, dictobj=None, **kwargs):
+        """Send a message of type `msg_type`.  Add keyword arguments for the
+        rest of the message.
+
+        If you pass on only the message type and an object, it is
+        assumed to be a dictionary to be merged after the message_type,
+        and before the keyword assignments.
+        """
         self.debug("message: %s, %s" % (msg_type, kwargs))
-        kwargs[self._out_type] = msg_type
-        self.io.send(kwargs)
+        out = {self._out_type: msg_type}
+        if isinstance(dictobj, dict):
+            out.update(dictobj)
+        out.update(kwargs)
+        self.send(out)
+
+    def send(self, msg):
+        """Wrapper for self.io.send, to detect any sending problem and
+        call the destroy callbacks"""
+        io = self.io
+        if not io.connected():
+            self.kill()
+            self.debug("not connected on send(): exiting greenlet")
+            raise gevent.GreenletExit()
+        self.io.send(msg)
+
 
     def assert_keys(self, msg, elements):
         """Make sure the elements are inside the message, otherwise send an
@@ -127,6 +181,7 @@ def watcher(request):
     while True:
         gevent.sleep(1.0)
         if not io.connected():
+            # TODO: Warning, what about the on_disconnect callbacks ?
             gevent.killall(request.jobs)
             return
 

@@ -1,3 +1,11 @@
+0.7:
+
+ - Added on_disconnect callbacks.
+ - Improved kill() which will make it recursive by default, and call the on_disconnect callbacks.
+ - spawn() now allows paramters (*args, **kwargs) to be passed in.
+ - Improved documentation
+ - msg() and error() now use send() which has all the connection state verification, and killing mechanism.
+
 0.6:
 
  - Fixed a bug with .ini files with no logging sections (like formatters)
