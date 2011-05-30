@@ -94,7 +94,8 @@ class SocketIOContext(object):
                 return parent.kill(recursive)
             return parent  # otherwise, switch context
         else:
-            io.close()
+            if io:
+                io.session.kill()
             return
             
 
