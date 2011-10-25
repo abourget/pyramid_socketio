@@ -1,41 +1,71 @@
-0.8:
+Changelog
+=========
 
- - Fixed a bug when killing sessions.
+
+0.9 (unreleased)
+----------------
+
+- ``socketio-serve-reload`` did not not find the ``socketio-serve``-executable
+  in some cases.
+  [WouterVH]
 
 
-0.7:
+0.8 (2011-05-30)
+----------------
 
- - Added on_disconnect callbacks.
- - Improved kill() which will make it recursive by default, and call the on_disconnect callbacks.
- - spawn() now allows paramters (*args, **kwargs) to be passed in.
- - Improved documentation
- - msg() and error() now use send() which has all the connection state verification, and killing mechanism.
+- Fixed a bug when killing sessions.
 
-0.6:
 
- - Fixed a bug with .ini files with no logging sections (like formatters)
+0.7 (2011-05-17)
+----------------
 
-0.5:
+- Added on_disconnect callbacks.
 
- - Added JavaScript example.
- - Fixed setup.py (having not included CHANGES.txt in the sdist)
+- Improved kill() which will make it recursive by default, and call the on_disconnect callbacks.
 
-0.4
+- spawn() now allows paramters (*args, **kwargs) to be passed in.
 
- - Updated docs.
+- Improved documentation
 
-0.3
+- msg() and error() now use send() which has all the connection state verification, and killing mechanism.
 
- - CHANGES and README added to description.
 
-0.2
+0.6 (2011-05-11)
+----------------
 
- - Help updated
+- Fixed a bug with .ini files with no logging sections (like formatters)
 
-0.1
 
- - Initial release
- - Support for paster server plugin
- - Provide with command-line servers
-   - socketio-serve
-   - socketio-serve-reload
+0.5 (2011-02-15)
+----------------
+
+- Added JavaScript example.
+- Fixed setup.py (having not included CHANGES.txt in the sdist)
+
+
+0.4 (2011-02-15)
+----------------
+
+- Updated docs.
+
+
+0.3 (2011-02-15)
+----------------
+
+- CHANGES and README added to description.
+
+
+0.2 (2011-02-15)
+----------------
+
+- Help updated
+
+
+0.1 (2011-02-15)
+----------------
+
+- Initial release
+- Support for paster server plugin
+- Provide with command-line servers
+  - socketio-serve
+  - socketio-serve-reload
