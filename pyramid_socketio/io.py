@@ -3,20 +3,23 @@
 import logging
 import gevent
 
-__all__ = ['SocketIOError', 'SocketIOContext',
-           'socketio_manage']
+__all__ = ['SocketIOError', 'SocketIOContext', 'socketio_manage']
 
 log = logging.getLogger(__name__)
+
 
 class SocketIOError(Exception):
     pass
 
+
 class SocketIOKeyAssertError(SocketIOError):
     pass
 
+
 class SocketIOContext(object):
     def __init__(self, request, in_type="type", out_type="type", debug=False):
-        """Called when you create a new context, either by hand or from a nested context.
+        """Called when you create a new context, either by hand or from a
+           nested context.
 
         Arguments:
         * ``request`` - the pyramid request
@@ -42,7 +45,7 @@ class SocketIOContext(object):
 
         # Override self.debug if in production mode
         if not debug:
-             self.debug = lambda x: None
+            self.debug = lambda x: None
 
     def debug(self, msg):
         print "%s: %s" % (self.id, msg)
@@ -97,7 +100,6 @@ class SocketIOContext(object):
             if io:
                 io.session.kill()
             return
-            
 
     def switch(self, new_context, *args, **kwargs):
         """Switch context, stack up contexts and pass on request.
@@ -144,7 +146,6 @@ class SocketIOContext(object):
             raise gevent.GreenletExit()
         self.io.send(msg)
 
-
     def assert_keys(self, msg, elements):
         """Make sure the elements are inside the message, otherwise send an
         error message and skip the message.
@@ -174,7 +175,8 @@ class SocketIOContext(object):
 
 
 def watcher(request):
-    """Watch if any of the greenlets for a request have died. If so, kill the request and the socket.
+    """Watch if any of the greenlets for a request have died. If so, kill the
+       request and the socket.
     """
     # TODO: add that if any of the request.jobs die, kill them all and exit
     io = request.environ['socketio']
@@ -185,6 +187,7 @@ def watcher(request):
             # TODO: Warning, what about the on_disconnect callbacks ?
             gevent.killall(request.jobs)
             return
+
 
 def socketio_recv(context):
     """Manage messages arriving from Socket.IO, dispatch to context handler"""
@@ -210,6 +213,7 @@ def socketio_recv(context):
         if not io.connected():
             return
 
+
 def socketio_manage(start_context):
     """Main SocketIO management function, call from within your Pyramid view.
 
@@ -231,7 +235,7 @@ def socketio_manage(start_context):
     killall = gevent.spawn(watcher, request)
 
     gevent.joinall(request.jobs + [killall])
-    
+
     start_context.debug("socketio_manage terminated")
 
     return "done"

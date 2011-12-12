@@ -9,6 +9,7 @@ from gevent.monkey import patch_all
 __all__ = ["server_factory",
            "server_factory_patched"]
 
+
 def server_factory(global_conf, host, port, resource="socket.io"):
     port = int(port)
     def serve(app):
