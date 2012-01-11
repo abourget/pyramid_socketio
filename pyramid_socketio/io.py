@@ -211,6 +211,7 @@ def socketio_recv(context):
                     context = newctx
 
         if not io.connected():
+            context.kill()
             return
 
 
