@@ -194,21 +194,24 @@ def socketio_recv(context):
     io = context.io
     in_type = context._in_type
     while True:
-        for msg in io.receive():
-            # Skip invalid messages
-            if not isinstance(msg, dict):
-                context.error("bad_request",
-                              "Your message needs to be JSON-formatted")
-            elif in_type not in msg:
-                context.error("bad_request",
-                              "You need a 'type' attribute in your message")
-            else:
-                # Call msg in context.
-                newctx = context(msg)
+        messages = io.receive()
 
-                # Switch context ?
-                if newctx:
-                    context = newctx
+        if messages:
+            for msg in messages:
+                # Skip invalid messages
+                if not isinstance(msg, dict):
+                    context.error("bad_request",
+                                "Your message needs to be JSON-formatted")
+                elif in_type not in msg:
+                    context.error("bad_request",
+                                "You need a 'type' attribute in your message")
+                else:
+                    # Call msg in context.
+                    newctx = context(msg)
+
+                    # Switch context ?
+                    if newctx:
+                        context = newctx
 
         if not io.session.connected:
             context.kill()
