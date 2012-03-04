@@ -194,7 +194,7 @@ def socketio_recv(context):
     io = context.io
     in_type = context._in_type
     while True:
-        for msg in io.recv():
+        for msg in io.receive():
             # Skip invalid messages
             if not isinstance(msg, dict):
                 context.error("bad_request",
