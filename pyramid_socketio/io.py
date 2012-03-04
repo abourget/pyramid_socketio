@@ -224,12 +224,7 @@ def socketio_manage(start_context):
     request = start_context.request
     io = request.environ['socketio']
 
-    if not io.session.connected:
-        # probably asked for something else dude!
-        return "there's no reason to get here, you won't get any further. have you mapped socket.io/lib to something ?"
-
     # Run startup if there's one
-
     start_context.spawn(socketio_recv, start_context)
 
     # Launch the watcher thread
