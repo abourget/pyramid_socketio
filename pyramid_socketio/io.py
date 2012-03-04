@@ -16,6 +16,20 @@ class SocketIOKeyAssertError(SocketIOError):
     pass
 
 
+def require_connection(fn):
+    def wrapped(ctx, *args, **kwargs):
+        io = ctx.io
+
+        if not io.session.connected:
+            ctx.kill()
+            ctx.debug("not connected on %s: exiting greenlet", fn.__name__)
+            raise gevent.GreenletExit()
+
+        return fn(ctx, *args, **kwargs)
+
+    return wrapped
+
+
 class SocketIOContext(object):
     def __init__(self, request, in_type="type", out_type="type", debug=False):
         """Called when you create a new context, either by hand or from a
@@ -136,15 +150,25 @@ class SocketIOContext(object):
         out.update(kwargs)
         self.send(out)
 
+    @require_connection
     def send(self, msg):
-        """Wrapper for self.io.send, to detect any sending problem and
-        call the destroy callbacks"""
-        io = self.io
-        if not io.session.connected:
-            self.kill()
-            self.debug("not connected on send(): exiting greenlet")
-            raise gevent.GreenletExit()
+        """ Sends a message to the socket """
         self.io.send(msg)
+
+    @require_connection
+    def send_event(self, name, msg):
+        """ Sends a custom event to the socket """
+        self.io.send_event(name, msg)
+
+    @require_connection
+    def broadcast(self, msg):
+        """ Broadcasts a message to all clients but this one """
+        self.io.broadcast(msg)
+
+    @require_connection
+    def broadcast_event(self, name, msg):
+        """ Broadcasts a custom event to all clients but this one """
+        self.io.broadcast_event(name, msg)
 
     def assert_keys(self, msg, elements):
         """Make sure the elements are inside the message, otherwise send an
