@@ -200,18 +200,21 @@ def socketio_recv(context):
     """Manage messages arriving from Socket.IO, dispatch to context handler"""
     io = context.io
     in_type = context._in_type
+
     while True:
-        for msg in io.recv():
+        message = io.receive()
+
+        if message:
             # Skip invalid messages
-            if not isinstance(msg, dict):
+            if not isinstance(message, dict):
                 context.error("bad_request",
-                              "Your message needs to be JSON-formatted")
-            elif in_type not in msg:
+                            "Your message needs to be JSON-formatted")
+            elif in_type not in message:
                 context.error("bad_request",
-                              "You need a 'type' attribute in your message")
+                            "You need a 'type' attribute in your message")
             else:
                 # Call msg in context.
-                newctx = context(msg)
+                newctx = context(message)
 
                 # Switch context ?
                 if newctx:
@@ -230,7 +233,6 @@ def socketio_manage(start_context):
     """
     request = start_context.request
     io = request.environ['socketio']
-
     # Run startup if there's one
     start_context.spawn(socketio_recv, start_context)
 
