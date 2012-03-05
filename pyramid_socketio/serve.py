@@ -47,7 +47,7 @@ def socketio_serve():
         # Load application and config.
         app = loadapp('config:%s' % cfgfile, relative_to='.')
         server = SocketIOServer((host, port), app,
-                                resource="socket.io")
+                                namespace="socket.io")
 
         try:
             print "Serving on %s:%d (http://127.0.0.1:%d) ..." % (host, port, port)
