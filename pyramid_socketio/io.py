@@ -97,6 +97,9 @@ class SocketIOContext(object):
         self.request = None
         self.io = None
 
+        if hasattr(self, 'disconnect'):
+            getattr(self, 'disconnect')()
+
         for callback, ar, kwar in self._on_disconnect:
             # NOTE: should we have a way to declare Blocking on_disconnect
             # callbacks, or should these things all be spawned to some other
