@@ -32,8 +32,8 @@ setup(name='pyramid_socketio',
       packages=find_packages(),
       include_package_data=True,
       zip_safe=False,
-      install_requires = requires,
-      entry_points = """\
+      install_requires=requires,
+      entry_points="""\
       [console_scripts]
       socketio-serve-reload = pyramid_socketio.servereload:socketio_serve_reload
       socketio-serve = pyramid_socketio.serve:socketio_serve
