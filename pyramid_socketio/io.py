@@ -199,7 +199,6 @@ class SocketIOContext(object):
             if 'data' in msg:
                 argval = msg['data']
 
-        import pdb; pdb.set_trace()
         if not hasattr(self, msg_type) or \
                 not callable(getattr(self, msg_type)):
             self.error("unknown_command", "Command unknown: %s" % msg[in_type])
