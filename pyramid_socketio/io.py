@@ -15,7 +15,8 @@ class SocketIOKeyAssertError(SocketIOError):
     pass
 
 class SocketIOContext(object):
-    def __init__(self, request, in_type="type", out_type="type", debug=False):
+    def __init__(self, request, in_type="type", out_type="type", debug=False,
+                 json_dumps=None, json_loads=None):
         """Called when you create a new context, either by hand or from a nested context.
 
         Arguments:
@@ -23,6 +24,8 @@ class SocketIOContext(object):
         * ``in_type`` - the dict. key for message names of incoming messages
         * ``out_type`` - the dict. key for message names, in outgoing message
         * ``debug`` - whether to disable debug logging...
+        * ``json_dumps`` - the function to use instead of `json.dumps`
+        * ``json_loads`` - the function to use instead of `json.loads`
 
         On the object you subclass from this one, you should define methods
         using the "msg_message_type" naming convention, where 'message_type'
@@ -32,6 +35,10 @@ class SocketIOContext(object):
         """
         self.request = request
         self.io = request.environ['socketio']
+        if json_dumps:
+            self.io.dumps = json_dumps
+        if json_loads:
+            self.io.loads = json_loads
         self._parent = None
         self._in_type = in_type
         self._out_type = out_type
