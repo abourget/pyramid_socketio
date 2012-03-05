@@ -265,6 +265,10 @@ def socketio_manage(start_context):
     """
     request = start_context.request
     io = request.environ['socketio']
+
+    if hasattr(start_context, 'connect'):
+        getattr(start_context, 'connect')()
+
     # Run startup if there's one
     start_context.spawn(socketio_recv, start_context)
 
