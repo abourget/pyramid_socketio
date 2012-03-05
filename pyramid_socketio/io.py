@@ -186,14 +186,27 @@ class SocketIOContext(object):
         """Parse the message upon reception and dispatch it to the good method.
         """
         in_type = self._in_type
-        msg_type = "msg_" + msg[in_type]
+        msg_type = msg[in_type]
+
+        argval = None
+
+        if msg_type == "event":
+            msg_type += "_%s" % msg['name']
+
+            if 'args' in msg:
+                argval = msg['args']
+        else:
+            if 'data' in msg:
+                argval = msg['data']
+
+        import pdb; pdb.set_trace()
         if not hasattr(self, msg_type) or \
                 not callable(getattr(self, msg_type)):
             self.error("unknown_command", "Command unknown: %s" % msg[in_type])
             return
         try:
             self.debug("Calling msg type: %s with obj: %s" % (msg_type, msg))
-            return getattr(self, msg_type)(msg)
+            return getattr(self, msg_type)(argval)
         except SocketIOKeyAssertError, e:
             return None
 
