@@ -147,7 +147,7 @@ class SocketIOContext(object):
         """Wrapper for self.io.send, to detect any sending problem and
         call the destroy callbacks"""
         io = self.io
-        if not io.connected():
+        if not io.session.connected:
             self.kill()
             self.debug("not connected on send(): exiting greenlet")
             raise gevent.GreenletExit()
@@ -190,7 +190,7 @@ def watcher(request):
     gevent.sleep(5.0)
     while True:
         gevent.sleep(1.0)
-        if not io.connected():
+        if not io.session.connected:
             # TODO: Warning, what about the on_disconnect callbacks ?
             gevent.killall(request.jobs)
             return
@@ -217,7 +217,7 @@ def socketio_recv(context):
                 if newctx:
                     context = newctx
 
-        if not io.connected():
+        if not io.session.connected:
             context.kill()
             return
 
@@ -231,12 +231,7 @@ def socketio_manage(start_context):
     request = start_context.request
     io = request.environ['socketio']
 
-    if not io.connected():
-        # probably asked for something else dude!
-        return "there's no reason to get here, you won't get any further. have you mapped socket.io/lib to something ?"
-
     # Run startup if there's one
-
     start_context.spawn(socketio_recv, start_context)
 
     # Launch the watcher thread
