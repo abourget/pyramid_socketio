@@ -16,6 +16,20 @@ class SocketIOKeyAssertError(SocketIOError):
     pass
 
 
+def require_connection(fn):
+    def wrapped(ctx, *args, **kwargs):
+        io = ctx.io
+
+        if not io.session.connected:
+            ctx.kill()
+            ctx.debug("not connected on %s: exiting greenlet", fn.__name__)
+            raise gevent.GreenletExit()
+
+        return fn(ctx, *args, **kwargs)
+
+    return wrapped
+
+
 class SocketIOContext(object):
     def __init__(self, request, in_type="type", out_type="type", debug=False,
                  json_dumps=None, json_loads=None):
@@ -90,6 +104,9 @@ class SocketIOContext(object):
         self.request = None
         self.io = None
 
+        if hasattr(self, 'disconnect'):
+            getattr(self, 'disconnect')()
+
         for callback, ar, kwar in self._on_disconnect:
             # NOTE: should we have a way to declare Blocking on_disconnect
             # callbacks, or should these things all be spawned to some other
@@ -143,15 +160,25 @@ class SocketIOContext(object):
         out.update(kwargs)
         self.send(out)
 
+    @require_connection
     def send(self, msg):
-        """Wrapper for self.io.send, to detect any sending problem and
-        call the destroy callbacks"""
-        io = self.io
-        if not io.session.connected:
-            self.kill()
-            self.debug("not connected on send(): exiting greenlet")
-            raise gevent.GreenletExit()
+        """ Sends a message to the socket """
         self.io.send(msg)
+
+    @require_connection
+    def send_event(self, name, msg):
+        """ Sends a custom event to the socket """
+        self.io.send_event(name, msg)
+
+    @require_connection
+    def broadcast(self, msg):
+        """ Broadcasts a message to all clients but this one """
+        self.io.broadcast(msg)
+
+    @require_connection
+    def broadcast_event(self, name, msg):
+        """ Broadcasts a custom event to all clients but this one """
+        self.io.broadcast_event(name, msg)
 
     def assert_keys(self, msg, elements):
         """Make sure the elements are inside the message, otherwise send an
@@ -169,14 +196,26 @@ class SocketIOContext(object):
         """Parse the message upon reception and dispatch it to the good method.
         """
         in_type = self._in_type
-        msg_type = "msg_" + msg[in_type]
+        msg_type = msg[in_type]
+
+        argval = None
+
+        if msg_type == "event":
+            msg_type += "_%s" % msg['name']
+
+            if 'args' in msg:
+                argval = msg['args']
+        else:
+            if 'data' in msg:
+                argval = msg['data']
+
         if not hasattr(self, msg_type) or \
                 not callable(getattr(self, msg_type)):
             self.error("unknown_command", "Command unknown: %s" % msg[in_type])
             return
         try:
             self.debug("Calling msg type: %s with obj: %s" % (msg_type, msg))
-            return getattr(self, msg_type)(msg)
+            return getattr(self, msg_type)(argval)
         except SocketIOKeyAssertError, e:
             return None
 
@@ -233,6 +272,10 @@ def socketio_manage(start_context):
     """
     request = start_context.request
     io = request.environ['socketio']
+
+    if hasattr(start_context, 'connect'):
+        getattr(start_context, 'connect')()
+
     # Run startup if there's one
     start_context.spawn(socketio_recv, start_context)
 
