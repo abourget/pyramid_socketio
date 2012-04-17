@@ -1,6 +1,11 @@
-####################
-CHECK OUT THIS POST: http://blog.abourget.net/2011/3/17/new-and-hot-part-4-pyramid-socket-io-gevent/
-####################
+THIS PACKAGE IS DEPRECATED.  SEE THE REVAMPED gevent-socketio AT:
+
+  https://github.com/abourget/gevent-socketio
+
+And the documentation at:
+
+  http://gevent-socketio.readthedocs.org/en/latest/index.html
+
 
 
 
@@ -20,7 +25,8 @@ or tweak your <code>[server:main]</code> section in your development.ini to:
 
 <pre>
 [server:main]
-use = egg:pyramid_socketio#sioserver_patched                                                                                     resource = socket.io
+use = egg:pyramid_socketio#sioserver_patched
+resource = socket.io
 host = 0.0.0.0
 port = 6555
 </pre>
